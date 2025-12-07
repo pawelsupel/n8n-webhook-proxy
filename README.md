@@ -1,44 +1,44 @@
 # n8n-webhook-proxy
 
-.NET 8 Minimal API pełniące rolę proxy dla webhooków z automatycznym przełączaniem do trybu durable queue (Azure Storage Queue) i workerem odwadniającym kolejkę.
+.NET 8 Minimal API acting as a webhook proxy with automatic switch to durable queue mode (Azure Storage Queue) and a worker that drains the queue.
 
-## Jak uruchomić lokalnie
+## Run locally
 ```bash
 dotnet run --project src/WebhookProxy/WebhookProxy.csproj
 ```
 
-Kluczowe zmienne konfiguracji (możesz ustawić przez `appsettings.*` albo zmienne środowiskowe):
-- `Forwarding__BaseUrl` – adres bazowy n8n (np. `https://automation.domain`)
-- `Forwarding__HealthUrl` – endpoint health n8n
-- `Queue__ConnectionString` – connection string do Azure Storage / Azurite
-- `Queue__QueueName` – nazwa kolejki (domyślnie `webhooks`)
-- `Validation__Mode` – `permissive` lub `strict`
-- `Worker__PollIntervalSeconds` / `Worker__BatchSize` – parametry workera kolejki
+Key configuration values (via `appsettings.*` or environment variables):
+- `Forwarding__BaseUrl` – n8n base address (e.g., `https://automation.domain`)
+- `Forwarding__HealthUrl` – n8n health endpoint
+- `Queue__ConnectionString` – Azure Storage / Azurite connection string
+- `Queue__QueueName` – queue name (default `webhooks`)
+- `Validation__Mode` – `permissive` or `strict`
+- `Worker__PollIntervalSeconds` / `Worker__BatchSize` – queue worker parameters
 
 ## Endpoints
-- `POST /webhook/{endpoint}` – odbiór webhooka; walidacja (JSON schema), forward do n8n w NORMAL MODE, enqueue w QUEUE MODE.
-- `PUT /validations/{endpoint}` – zapis schema do katalogu `validations`.
-- `GET /status` – tryb pracy, długość kolejki, ostatni błąd, wynik health-checku.
-- `GET /health` – prosty liveness dla reverse proxy/K8s.
+- `POST /webhook/{endpoint}` – receive webhook; validate (JSON schema), forward to n8n in NORMAL MODE, enqueue in QUEUE MODE.
+- `PUT /validations/{endpoint}` – save schema into `validations` folder.
+- `GET /status` – current mode, queue length, last error, health-check result.
+- `GET /health` – simple liveness for reverse proxy/K8s.
 
-## Walidacje
-Schema JSON zapisywane w `src/WebhookProxy/validations/{endpoint}.json` (fallback na `default.json`). W trybie `strict` brak pliku zwraca 422, w `permissive` payload przechodzi dalej.
+## Validations
+JSON schema stored in `src/WebhookProxy/validations/{endpoint}.json` (fallback to `default.json`). In `strict` mode missing file returns 422, in `permissive` payload passes through.
 
-## Tryby pracy
-- **NORMAL MODE** – forward do n8n (timeout 10s domyślnie). Błędy forwardowania przełączają do **QUEUE MODE**.
-- **QUEUE MODE** – każdy webhook trafia do kolejki. Worker co 30s (domyślnie) pobiera batch, po stabilnym health-checku i opróżnieniu kolejki wraca do NORMAL MODE.
+## Modes
+- **NORMAL MODE** – forward to n8n (10s timeout by default). Forwarding failures switch to **QUEUE MODE**.
+- **QUEUE MODE** – each webhook goes to the queue. Worker polls every 30s (default), drains batch, and after stable health + empty queue returns to NORMAL MODE.
 
-## Testy (Azure DevOps friendly)
-Uruchom:
+## Tests (Azure DevOps friendly)
+Run:
 ```bash
 dotnet test
 ```
-Domyślny `coverlet.collector` jest w projekcie testowym, więc w Azure DevOps wystarczy task `DotNetCoreCLI@2` z `command: test`.
+`coverlet.collector` is included, so in Azure DevOps a `DotNetCoreCLI@2` task with `command: test` is enough.
 
 ## Docker
-Budowa i publikacja do Docker Hub:
+Build and push to Docker Hub:
 ```bash
 docker build -t <user>/n8n-webhook-proxy:latest .
 docker push <user>/n8n-webhook-proxy:latest
 ```
-Kontener nasłuchuje na `8080` (`ASPNETCORE_URLS=http://+:8080`).
+Container listens on `8080` (`ASPNETCORE_URLS=http://+:8080`).
