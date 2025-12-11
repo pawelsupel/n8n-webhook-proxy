@@ -148,6 +148,19 @@ app.MapPost("/webhook/{**endpoint}", async (
         mode = "QUEUE",
         reason = forwardResult.Error ?? "forwarding_failed"
     });
+})
+.Accepts<JsonObject>("application/json", "application/xml")
+.Produces(StatusCodes.Status200OK)
+.Produces(StatusCodes.Status202Accepted)
+.Produces(StatusCodes.Status400BadRequest)
+.Produces(StatusCodes.Status413PayloadTooLarge)
+.Produces(StatusCodes.Status422UnprocessableEntity)
+.Produces(StatusCodes.Status500InternalServerError)
+.WithOpenApi(o =>
+{
+    o.Summary = "Receive webhook, validate, forward or enqueue";
+    o.Description = "Accepts arbitrary JSON/XML payloads. In NORMAL mode forwards to n8n; on failure or QUEUE mode enqueues message.";
+    return o;
 });
 
 app.MapPut("/validations/{endpoint}", async (
