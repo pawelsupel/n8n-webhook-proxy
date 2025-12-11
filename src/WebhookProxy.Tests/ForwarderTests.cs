@@ -16,7 +16,7 @@ public class ForwarderTests
             Microsoft.Extensions.Options.Options.Create(new ForwardingOptions { BaseUrl = "" }),
             NullLogger<Forwarder>.Instance);
 
-        var result = await forwarder.TryForwardAsync("orders", "{}", "application/json", new Dictionary<string, string>(), CancellationToken.None);
+        var result = await forwarder.TryForwardAsync("orders", "{}", "application/json", new Dictionary<string, string>(), new Dictionary<string, string>(), CancellationToken.None);
 
         Assert.False(result.Success);
         Assert.Contains("not configured", result.Error, StringComparison.OrdinalIgnoreCase);
@@ -46,11 +46,15 @@ public class ForwarderTests
             ["Accept-Encoding"] = "gzip"
         };
 
-        var result = await forwarder.TryForwardAsync("orders", """{"id":1}""", "application/json", headers, CancellationToken.None);
+        var query = new Dictionary<string, string> { ["utm"] = "abc", ["q"] = "1 2" };
+
+        var result = await forwarder.TryForwardAsync("orders", """{"id":1}""", "application/json", headers, query, CancellationToken.None);
 
         Assert.True(result.Success);
         Assert.NotNull(captured);
         Assert.Equal(HttpMethod.Post, captured!.Method);
+        Assert.Contains("utm=abc", captured!.RequestUri!.Query);
+        Assert.Contains("q=1%202", captured!.RequestUri!.Query);
         Assert.DoesNotContain(captured!.Headers, h => h.Key.Equals("Content-Length", StringComparison.OrdinalIgnoreCase));
         Assert.DoesNotContain(captured!.Headers, h => h.Key.Equals("Host", StringComparison.OrdinalIgnoreCase));
         Assert.Contains(captured!.Headers, h => h.Key.Equals("X-Test", StringComparison.OrdinalIgnoreCase));

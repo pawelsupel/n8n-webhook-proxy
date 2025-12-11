@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "webhook-test payload",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "lang": { "type": "string" },
+    "user_id": { "type": "string", "format": "email" },
+    "goal": { "type": "string" },
+    "experience_level": { "type": "string" },
+    "workout_days_per_week": { "type": "integer", "minimum": 0 },
+    "training_environment": { "type": "string" },
+    "training_type": { "type": "string" },
+    "available_equipment": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "nutrition_plan_requested": { "type": "boolean" },
+    "nutrition_goal": { "type": "string" },
+    "dietary_preferences": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "meals_per_day": { "type": "integer", "minimum": 0 },
+    "body_photos": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "front": { "type": "string" },
+        "side": { "type": "string" },
+        "back": { "type": "string" }
+      },
+      "required": ["front", "side", "back"]
+    },
+    "notes": { "type": "string" }
+  },
+  "required": [
+    "lang",
+    "user_id",
+    "goal",
+    "experience_level",
+    "workout_days_per_week",
+    "training_environment",
+    "training_type",
+    "available_equipment",
+    "nutrition_plan_requested",
+    "nutrition_goal",
+    "dietary_preferences",
+    "meals_per_day",
+    "body_photos",
+    "notes"
+  ]
+}

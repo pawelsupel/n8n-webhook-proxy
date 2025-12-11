@@ -33,6 +33,7 @@ public sealed class Forwarder
         string payload,
         string contentType,
         IDictionary<string, string> headers,
+        IDictionary<string, string> query,
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(_options.BaseUrl))
@@ -40,7 +41,18 @@ public sealed class Forwarder
             return ForwardResult.FromFailure("Forwarding base URL is not configured");
         }
 
-        var targetUrl = $"{_options.BaseUrl.TrimEnd('/')}/webhook/{endpoint}";
+        var prefix = _options.PathPrefix?.Trim('/') ?? string.Empty;
+        var basePath = _options.BaseUrl.TrimEnd('/');
+        var targetUrl = string.IsNullOrEmpty(prefix)
+            ? $"{basePath}/{endpoint}"
+            : $"{basePath}/{prefix}/{endpoint}";
+
+        if (query.Count > 0)
+        {
+            var queryString = string.Join("&", query.Select(kvp => $"{Uri.EscapeDataString(kvp.Key)}={Uri.EscapeDataString(kvp.Value)}"));
+            targetUrl = $"{targetUrl}?{queryString}";
+        }
+
         using var request = new HttpRequestMessage(HttpMethod.Post, targetUrl)
         {
             Content = new StringContent(payload, Encoding.UTF8, contentType)

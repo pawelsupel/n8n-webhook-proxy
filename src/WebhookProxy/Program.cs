@@ -32,7 +32,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.MapPost("/webhook/{endpoint}", async (
+app.MapPost("/webhook/{**endpoint}", async (
     string endpoint,
     HttpContext httpContext,
     ValidationService validationService,
@@ -42,7 +42,12 @@ app.MapPost("/webhook/{endpoint}", async (
     ILogger<Program> logger,
     CancellationToken cancellationToken) =>
 {
-    (string Body, string ContentType, IDictionary<string, string> Headers) request;
+    if (string.IsNullOrWhiteSpace(endpoint))
+    {
+        return Results.BadRequest(new { error = "Endpoint is required" });
+    }
+
+    (string Body, string ContentType, IDictionary<string, string> Headers, IDictionary<string, string> Query) request;
     try
     {
         request = await WebhookRequestReader.ReadAsync(httpContext, cancellationToken);
@@ -67,7 +72,7 @@ app.MapPost("/webhook/{endpoint}", async (
             return Results.Problem("Invalid JSON payload", statusCode: StatusCodes.Status400BadRequest);
         }
 
-        var validationResult = await validationService.ValidateAsync(endpoint, jsonPayload!, cancellationToken);
+    var validationResult = await validationService.ValidateAsync(endpoint, jsonPayload!, cancellationToken);
         if (!validationResult.IsValid)
         {
             var problem = new ValidationProblemDetails(new Dictionary<string, string[]>
@@ -94,7 +99,7 @@ app.MapPost("/webhook/{endpoint}", async (
         }
     }
 
-    var message = new WebhookMessage(endpoint, request.ContentType, request.Body, request.Headers, DateTimeOffset.UtcNow);
+    var message = new WebhookMessage(endpoint, request.ContentType, request.Body, request.Headers, request.Query, DateTimeOffset.UtcNow);
 
     if (modeService.CurrentMode == ProxyMode.Queue)
     {
@@ -115,7 +120,7 @@ app.MapPost("/webhook/{endpoint}", async (
         }
     }
 
-    var forwardResult = await forwarder.TryForwardAsync(endpoint, request.Body, request.ContentType, request.Headers, cancellationToken);
+    var forwardResult = await forwarder.TryForwardAsync(endpoint, request.Body, request.ContentType, request.Headers, request.Query, cancellationToken);
     if (forwardResult.Success)
     {
         return Results.Ok(new { status = "forwarded", mode = "NORMAL" });

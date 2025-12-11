@@ -6,7 +6,7 @@ namespace WebhookProxy.Services;
 
 public static class WebhookRequestReader
 {
-    public static async Task<(string Body, string ContentType, IDictionary<string, string> Headers)> ReadAsync(
+    public static async Task<(string Body, string ContentType, IDictionary<string, string> Headers, IDictionary<string, string> Query)> ReadAsync(
         HttpContext context,
         CancellationToken cancellationToken)
     {
@@ -36,6 +36,10 @@ public static class WebhookRequestReader
                         !string.Equals(h.Key, "Host", StringComparison.OrdinalIgnoreCase))
             .ToDictionary(h => h.Key, h => h.Value.ToString());
 
-        return (body, contentType, headers);
+        var query = context.Request.Query.ToDictionary(
+            q => q.Key,
+            q => q.Value.ToString());
+
+        return (body, contentType, headers, query);
     }
 }

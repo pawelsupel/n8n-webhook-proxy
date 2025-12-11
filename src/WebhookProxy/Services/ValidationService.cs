@@ -49,7 +49,8 @@ public sealed class ValidationService
         var directory = GetValidationDirectory();
         Directory.CreateDirectory(directory);
 
-        var targetPath = Path.Combine(directory, $"{endpoint}.json");
+        var fileName = NormalizeEndpoint(endpoint);
+        var targetPath = Path.Combine(directory, $"{fileName}.json");
         await File.WriteAllTextAsync(targetPath, rawSchema, cancellationToken);
         _cache.TryRemove(targetPath, out _);
 
@@ -59,7 +60,8 @@ public sealed class ValidationService
     private async Task<JsonSchema?> LoadSchemaAsync(string endpoint, CancellationToken cancellationToken)
     {
         var directory = GetValidationDirectory();
-        var endpointPath = Path.Combine(directory, $"{endpoint}.json");
+        var fileName = NormalizeEndpoint(endpoint);
+        var endpointPath = Path.Combine(directory, $"{fileName}.json");
         var defaultPath = Path.Combine(directory, "default.json");
 
         string? targetPath = File.Exists(endpointPath)
@@ -88,6 +90,17 @@ public sealed class ValidationService
         return Path.IsPathRooted(_options.BasePath)
             ? _options.BasePath
             : Path.Combine(AppContext.BaseDirectory, _options.BasePath);
+    }
+
+    private static string NormalizeEndpoint(string endpoint)
+    {
+        var baseName = endpoint.Split('/', 2)[0];
+        foreach (var invalid in Path.GetInvalidFileNameChars())
+        {
+            baseName = baseName.Replace(invalid, '_');
+        }
+
+        return string.IsNullOrWhiteSpace(baseName) ? "default" : baseName;
     }
 }
 

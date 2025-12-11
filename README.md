@@ -10,6 +10,7 @@ dotnet run --project src/WebhookProxy/WebhookProxy.csproj
 Key configuration values (via `appsettings.*` or environment variables):
 - `Forwarding__BaseUrl` – n8n base address (e.g., `https://automation.domain`)
 - `Forwarding__HealthUrl` – n8n health endpoint
+- `Forwarding__PathPrefix` – optional path prefix before `{endpoint}` when forwarding (default `webhook`; set empty to forward raw endpoint path)
 - `Queue__ConnectionString` – Azure Storage / Azurite connection string
 - `Queue__QueueName` – queue name (default `webhooks`)
 - `Validation__Mode` – `permissive` or `strict`

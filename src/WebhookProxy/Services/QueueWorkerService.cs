@@ -74,6 +74,7 @@ public sealed class QueueWorkerService : BackgroundService
                     message.Payload.Payload,
                     message.Payload.ContentType,
                     message.Payload.Headers,
+                    message.Payload.Query,
                     stoppingToken);
 
                 if (forwardResult.Success)

@@ -1,6 +1,36 @@
-@WebhookProxy_HostAddress = http://localhost:5106
+@WebhookProxy_HostAddress = http://localhost:8080
 
-GET {{WebhookProxy_HostAddress}}/weatherforecast/
+### Sample webhook POST (webhook-test)
+POST {{WebhookProxy_HostAddress}}/webhook/webhook-test/3448a29d-6157-49bd-b478-dc050ebda49c
+Content-Type: application/json
+
+{
+  "lang": "pl",
+  "user_id": "demo@piksystems.pl",
+  "goal": "",
+  "experience_level": "Zaawansowany",
+  "workout_days_per_week": 3,
+  "training_environment": "dom",
+  "training_type": "FBW",
+  "available_equipment": [],
+  "nutrition_plan_requested": false,
+  "nutrition_goal": "",
+  "dietary_preferences": [],
+  "meals_per_day": 3,
+  "body_photos": {
+    "front": "",
+    "side": "",
+    "back": ""
+  },
+  "notes": ""
+}
+
+### Upload validation schema for webhook-test
+PUT {{WebhookProxy_HostAddress}}/validations/webhook-test
+Content-Type: application/json
+
+< ./validations/webhook-test.json
+
+### Check proxy status
+GET {{WebhookProxy_HostAddress}}/status
 Accept: application/json
-
-###

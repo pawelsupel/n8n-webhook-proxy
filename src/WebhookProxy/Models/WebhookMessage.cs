@@ -7,6 +7,7 @@ public sealed record WebhookMessage(
     string ContentType,
     string Payload,
     IDictionary<string, string> Headers,
+    IDictionary<string, string> Query,
     DateTimeOffset ReceivedAt)
 {
     [JsonIgnore]
